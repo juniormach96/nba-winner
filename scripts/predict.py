@@ -1,9 +1,10 @@
 from typing import List
 from datetime import date
+import numpy as np
 import pandas as pd
 import pandas as pd
 from prefect import task
-from pycaret.classification import *
+from pycaret.classification import load_model, predict_model
 
 
 @task
