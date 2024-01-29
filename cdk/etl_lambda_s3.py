@@ -77,6 +77,18 @@ class ETLLambdaS3(Stack):
                 resources=[etl_lambda_function.function_arn],
             )
         )
+        # Add ECR permissions to the CodeBuild project role
+        build_project.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetAuthorizationToken",
+                ],
+                resources=[ecr_repository.repository_arn],
+            )
+        )
         return build_project
 
     def create_bucket(self):
