@@ -23,11 +23,14 @@ class ETLLambdaS3(Stack):
         self.create_codebuild_project(
             codecommit_repository, ecr_repository, etl_lambda_function
         )
-        self.create_outputs(bucket, etl_lambda_function)
+        self.create_outputs(bucket, etl_lambda_function, codecommit_repository)
 
     def create_codecommit_repository(self):
-        repository = codecommit.Repository.from_repository_name(
-            self, "NbaEtlRepository", repository_name="nba-etl-repository"
+        repository = codecommit.Repository(
+            self,
+            "NbaEtlRepository",
+            repository_name="nba-etl-repository",
+            description="Repository for NBA ETL processes",
         )
         return repository
 
@@ -100,6 +103,13 @@ class ETLLambdaS3(Stack):
             build_spec=codebuild.BuildSpec.from_source_filename("buildspec.yml"),
         )
         ecr_repository.grant_pull_push(build_project)
+        # Add permissions to update Lambda function code
+        build_project.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["lambda:UpdateFunctionCode"],
+                resources=[etl_lambda_function.function_arn],
+            )
+        )
         return build_project
 
     def create_bucket(self):
@@ -130,8 +140,8 @@ class ETLLambdaS3(Stack):
             self,
             "ETL_lambda_function",
             code=_lambda.DockerImageCode.from_image_asset(
-                directory="functions/ETL",
-                file="ETL.dockerfile",
+                directory=".",
+                file="etl.dockerfile",
             ),
             role=lambda_role,
             environment={"S3_BUCKET": bucket.bucket_name},
@@ -139,10 +149,16 @@ class ETLLambdaS3(Stack):
 
         return lambda_function
 
-    def create_outputs(self, bucket, etl_lambda_function):
+    def create_outputs(self, bucket, etl_lambda_function, codecommit_repository):
         CfnOutput(self, "exampleBucketArn", value=bucket.bucket_arn)
         CfnOutput(
             self,
             "lambdaFunctionArn",
             value=etl_lambda_function.function_arn,
+        )
+        CfnOutput(
+            self,
+            "codeCommitRepositoryCloneUrl",
+            value=codecommit_repository.repository_clone_url_http,
+            description="HTTP Clone URL of the CodeCommit repository",
         )
