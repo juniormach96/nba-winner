@@ -1,0 +1,4 @@
+prefect==0.15.12
+pandas==1.4.0
+numpy==1.19.5
+nba-api==1.1.11
