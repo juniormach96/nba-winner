@@ -17,7 +17,7 @@ class ETLLambdaS3(Stack):
         codecommit_repository = self.create_codecommit_repository()
         ecr_repository = self.create_ecr_repository()
         bucket = self.create_bucket()
-        etl_lambda_function = self.create_etl_lambda_function(bucket)
+        etl_lambda_function = self.create_etl_lambda_function(bucket, ecr_repository)
         self.create_codebuild_project(
             codecommit_repository, ecr_repository, etl_lambda_function
         )
@@ -89,7 +89,7 @@ class ETLLambdaS3(Stack):
         )
         return bucket
 
-    def create_etl_lambda_function(self, bucket):
+    def create_etl_lambda_function(self, bucket, ecr_repository):
         lambda_role = iam.Role(
             self,
             "LambdaExecutionRole",
@@ -100,6 +100,17 @@ class ETLLambdaS3(Stack):
                 effect=iam.Effect.ALLOW,
                 actions=["s3:GetObject", "s3:PutObject"],
                 resources=[bucket.bucket_arn, bucket.arn_for_objects("*")],
+            )
+        )
+        # Grant ECR pull permissions
+        lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "ecr:BatchCheckLayerAvailability",
+                ],
+                resources=[ecr_repository.repository_arn],
             )
         )
 
