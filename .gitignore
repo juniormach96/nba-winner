@@ -211,3 +211,4 @@ coverage/
 /tsconfig.json
 
 aws-cdk.dockerfile
+docker-compose.yml

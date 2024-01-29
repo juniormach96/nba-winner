@@ -1,98 +1,58 @@
-# NBA Winner
 
-NBA Winner is a ETL Process to forecast winner from NBA matches.
+# Welcome to your CDK Python project!
 
-## Installation
+This is a blank project for CDK development with Python.
 
-### Pre-Requisites
-* Python >= 3.6
-* Git
+The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
+This project is set up like a standard Python project.  The initialization
+process also creates a virtualenv within this project, stored under the `.venv`
+directory.  To create the virtualenv it assumes that there is a `python3`
+(or `python` for Windows) executable in your path with access to the `venv`
+package. If for any reason the automatic creation of the virtualenv fails,
+you can create the virtualenv manually.
 
-1. Create a folder and Clone the github repository into it
+To manually create a virtualenv on MacOS and Linux:
 
-```bash
-https://github.com/juniormach96/nba-winner
 ```
-2. Create a virtual environment to isolate dependencies
-```bash
-python -m venv .venv
-```
-3. Access it
-
-    3.1. Windows PowerShell:
-    ```bash
-    .venv\Scripts\Activate.ps1
-    ```
-    3.2. MAC OS/Linux:
-    ```bash
-    source venv/bin/activate
-    ```
-4. Install the dependencies
-```bash
-pip install -r requirements.txt
+$ python3 -m venv .venv
 ```
 
+After the init process completes and the virtualenv is created, you can use the following
+step to activate your virtualenv.
 
-## Usage
-
-1. Enter the names of the teams that you want to predict the matches in the file "data/matches.json", following the file format: the first name is for the away team, the second for the home team.
-```bash
-# data/matches.json example
-{
-    "MATCHES":[
-       [
-          "Away Team",
-          "Home Team"
-       ]
-}
+```
+$ source .venv/bin/activate
 ```
 
-2. Type the following command on the terminal
-```bash
-python main.py
-```
-This will trigger the pipeline and generate a csv file at "data/predictions" with predictions from the games you've selected.
+If you are a Windows platform, you would activate the virtualenv like this:
 
- TEAM_NAME_HOME | TEAM_NAME_AWAY | RESULT    | WINNER_FAIR_ODDS | MODEL_SCORE |
-|----------------|----------------|-----------|------------------|-------------|
-| Home Team      | Away Team      | home wins | 1.833            | 0.6         |
-
-## Project Structure
 ```
-.
-├── data
-│   ├── predictions              
-│   │   ├──predictions.csv    # Predictions of the day
-│   ├── games.csv             # Games used to train the model
-│   ├── matches.json          # Teams names provided by the user
-│   ├── to_predict.csv        # Games with matches of the day
-├── models                    
-│   ├── best_model.pkl        # Machine Learning model
-├── scripts
-│   ├── extract.py            # Requests games from NBA API
-│   ├── load.py               # Stores games into ../data/ folder
-│   ├── transform.py          # Process games
-│   ├── predict.py            # Predicts new matches
-├── main.py
-├── requirements.txt          # Dependencies
-├── train_ml.py               # Trains a new Machine Learning model
+% .venv\Scripts\activate.bat
 ```
 
-## Challenges
-Unlikely soccer, home team is listed on the right. This caused some misinterpretations during predicting new games.
+Once the virtualenv is activated, you can install the required dependencies.
 
-## Technologies
-* NBA API: extract the data;
-* Pandas: clean and process it;
-* Pycaret: creates a machine learning model;
-* Prefect: orchestrates ETL process
-## Future Improvements
-* Add SQL server;
-* Add tests;
-* Optimize workflow to not carry all the data through all the functions;
-* Take into account days since last game;
-* Dynamically scrap matches of the day.
+```
+$ pip install -r requirements.txt
+```
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
+At this point you can now synthesize the CloudFormation template for this code.
+
+```
+$ cdk synth
+```
+
+To add additional dependencies, for example other CDK libraries, just add
+them to your `setup.py` file and rerun the `pip install -r requirements.txt`
+command.
+
+## Useful commands
+
+ * `cdk ls`          list all stacks in the app
+ * `cdk synth`       emits the synthesized CloudFormation template
+ * `cdk deploy`      deploy this stack to your default AWS account/region
+ * `cdk diff`        compare deployed stack with current state
+ * `cdk docs`        open CDK documentation
+
+Enjoy!
