@@ -6,4 +6,4 @@ RUN pip install -r requirements-etl.txt
 
 COPY . .
 
-CMD ["etl.handler"]
+CMD ["functions.ETL.etl.handler"]
