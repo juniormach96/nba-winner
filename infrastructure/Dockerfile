@@ -18,6 +18,14 @@ RUN apt-get install -y nodejs python3 python3-pip
 RUN pip install awscli awscli-local && \
     npm install -g aws-cdk aws-cdk-local
 
-# Set the default command for the container
-CMD ["tail", "-f", "/dev/null"]
+COPY ./requirements.txt requirements.txt
 
+RUN pip install -r requirements.txt
+
+COPY . .
+
+RUN cdk synth
+
+CMD ["tail", "-f", "/dev/null"]
+# RUN cdk deploy
+# Set the default command for the container
