@@ -3,8 +3,6 @@ import os
 from aws_cdk import App, Aws, CfnOutput, Stack
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
-from aws_cdk import aws_codepipeline as codepipeline
-from aws_cdk import aws_codepipeline_actions as cpactions
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
@@ -38,37 +36,6 @@ class ETLLambdaS3(Stack):
         repository_name = "etl-lambda-repository"
         repository = ecr.Repository(self, "NewEcrRepo", repository_name=repository_name)
         return repository
-
-    def create_codepipeline(self, codecommit_repository, codebuild_project):
-        source_output = codepipeline.Artifact()
-
-        pipeline = codepipeline.Pipeline(
-            self,
-            "ETLPipeline",
-            stages=[
-                codepipeline.StageProps(
-                    stage_name="Source",
-                    actions=[
-                        cpactions.CodeCommitSourceAction(
-                            action_name="CodeCommit_Source",
-                            repository=codecommit_repository,
-                            output=source_output,
-                        )
-                    ],
-                ),
-                codepipeline.StageProps(
-                    stage_name="Build",
-                    actions=[
-                        cpactions.CodeBuildAction(
-                            action_name="Build_and_Push_Docker_Image",
-                            project=codebuild_project,
-                            input=source_output,
-                        )
-                    ],
-                ),
-            ],
-        )
-        return pipeline
 
     def create_codebuild_project(
         self, codecommit_repository, ecr_repository, etl_lambda_function
