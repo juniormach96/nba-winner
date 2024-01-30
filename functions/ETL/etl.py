@@ -1,26 +1,27 @@
+import os
+
 from prefect import Flow
 
-from .extract import extract
-from .load import load
-from .transform import (
-    add_moving_average,
-    drop_few_games_teams,
-    pre_select_features,
-    separate_bottom_games,
-)
+from scripts.extract import extract
+from scripts.load import load
+from scripts.transform import transform
 
 
 def prefect_flow():
     with Flow(name="nba_etl_pipeline") as flow:
-        games = extract()
-        games = pre_select_features(games)
-        games = drop_few_games_teams(games)
-        dfs = add_moving_average(games)
-        dfs = separate_bottom_games(dfs)
-        load()
+        games_data = extract()
+        to_train, to_predict = transform(games_data)
+        load(to_train, file_name="to_train")
+        load(to_predict, file_name="to_predict")
 
     return flow
 
 
 def handler(event, context):
     prefect_flow().run()
+
+
+if __name__ == "__main__":
+    # For local test
+    if os.getenv("LOCAL_TEST"):
+        handler({}, None)
