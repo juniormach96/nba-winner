@@ -1,6 +1,6 @@
 import os
 
-from aws_cdk import App, Aws, CfnOutput, Stack
+from aws_cdk import App, Aws, CfnOutput, Duration, Stack
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ecr as ecr
@@ -117,9 +117,7 @@ class ETLLambdaS3(Stack):
         # Grant ECR pull permissions
         lambda_role.add_to_policy(
             iam.PolicyStatement(
-                actions=[
-                    "ecr:*"
-                ],
+                actions=["ecr:*"],
                 resources=[ecr_repository.repository_arn],
             )
         )
@@ -133,6 +131,8 @@ class ETLLambdaS3(Stack):
             ),
             role=lambda_role,
             environment={"S3_BUCKET": bucket.bucket_name},
+            memory_size=1024,
+            timeout=Duration.minutes(5),
         )
 
         return lambda_function

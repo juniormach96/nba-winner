@@ -6,6 +6,4 @@ RUN pip install -r requirements-etl.txt
 
 COPY functions/ETL /var/task/
 
-WORKDIR /var/task/
-
 CMD ["etl.handler"]
