@@ -118,19 +118,7 @@ class ETLLambdaS3(Stack):
         lambda_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
-                    "ecr:SetRepositoryPolicy",
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchGetImage",
-                    "ecr:CompleteLayerUpload",
-                    "ecr:DescribeImages",
-                    "ecr:DescribeRepositories",
-                    "ecr:UploadLayerPart",
-                    "ecr:ListImages",
-                    "ecr:InitiateLayerUpload",
-                    "ecr:BatchCheckLayerAvailability",
-                    "ecr:GetRepositoryPolicy",
-                    "ecr:PutImage",
-                    "ecr:GetAuthorizationToken",
+                    "ecr:*"
                 ],
                 resources=[ecr_repository.repository_arn],
             )
