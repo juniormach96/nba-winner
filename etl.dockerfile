@@ -1,9 +1,8 @@
 FROM public.ecr.aws/lambda/python:3.8
 
-COPY requirements-etl.txt requirements-etl.txt
-
+COPY requirements-etl.txt /var/task/requirements-etl.txt
 RUN pip install -r requirements-etl.txt
 
-COPY . .
+COPY functions/ETL /var/task/
 
 CMD ["functions.ETL.etl.handler"]
