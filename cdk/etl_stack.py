@@ -9,7 +9,7 @@ from aws_cdk import aws_lambda as _lambda
 from aws_cdk import aws_s3 as s3
 
 
-class ETLLambdaS3(Stack):
+class ETLStack(Stack):
     def __init__(self, app: App, id: str) -> None:
         super().__init__(app, id)
 
