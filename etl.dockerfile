@@ -8,4 +8,4 @@ COPY functions/ETL /var/task/
 
 WORKDIR /var/task/
 
-CMD ["functions.ETL.etl.handler"]
+CMD ["etl.handler"]
