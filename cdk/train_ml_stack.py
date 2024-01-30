@@ -1,42 +1,67 @@
+from aws_cdk import App, Aws, CfnOutput, Duration, Stack
+from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_s3 as s3
+
+
 class TrainMLStack(Stack):
-    def __init__(self, app: App, id: str, bucket: s3.Bucket, **kwargs) -> None:
+    def __init__(
+        self,
+        app: App,
+        id: str,
+        s3_bucket: s3.Bucket,
+        train_ml_ecr_repository: ecr.Repository,
+        **kwargs
+    ) -> None:
         super().__init__(app, id, **kwargs)
 
         # Create the Lambda function for the ML training
-        ml_lambda_function = self.create_ml_lambda_function(bucket)
-
+        train_ml_lambda_function = self.create_ml_lambda_function(
+            s3_bucket=s3_bucket, train_ml_ecr_repository=train_ml_ecr_repository
+        )
         # Outputs
-        self.create_outputs(ml_lambda_function)
+        self.create_outputs(train_ml_lambda_function)
 
-    def create_ml_lambda_function(self, bucket):
-        ml_lambda_role = iam.Role(
+    def create_ml_lambda_function(
+        self, s3_bucket: s3.Bucket, train_ml_ecr_repository: ecr.Repository
+    ):
+        lambda_role = iam.Role(
             self,
             "MLLambdaExecutionRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
         )
         # Grant necessary permissions to the Lambda role
-        ml_lambda_role.add_to_policy(
+        lambda_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=["s3:GetObject", "s3:PutObject"],
-                resources=[bucket.bucket_arn, bucket.arn_for_objects("*")],
+                resources=[s3_bucket.bucket_arn, s3_bucket.arn_for_objects("*")],
             )
         )
 
-        ml_lambda_function = _lambda.DockerImageFunction(
+        lambda_function = _lambda.DockerImageFunction(
             self,
-            "MLTrain_lambda_function",
+            "TrainML_lambda_function",
             code=_lambda.DockerImageCode.from_image_asset(
                 directory=".",
-                file="train_ml.dockerfile",  # Dockerfile for ML training
+                file="train_ml.dockerfile",
             ),
-            role=ml_lambda_role,
-            environment={"S3_BUCKET": bucket.bucket_name},
+            role=lambda_role,
+            environment={"S3_BUCKET": s3_bucket.bucket_name},
             memory_size=1024,
             timeout=Duration.minutes(5),
         )
 
-        return ml_lambda_function
+        # Grant ECR pull permissions
+        lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["ecr:*"],
+                resources=[train_ml_ecr_repository.repository_arn],
+            )
+        )
+
+        return lambda_function
 
     def create_outputs(self, ml_lambda_function):
         CfnOutput(
