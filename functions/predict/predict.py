@@ -24,9 +24,7 @@ def load_dataframe_from_s3(bucket, file_key):
 
 def handler(event, context):
     bucket = config.S3_BUCKET
-    print("BUCKET", bucket)
     model_key = config.ML_MODEL_FILE
-    print("MODEL", model_key)
     dataframe_key = config.PREDICT_FILE_NAME
     features = config.FEATURES
 
