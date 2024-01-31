@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 from io import BytesIO
@@ -20,6 +21,17 @@ def load_dataframe_from_s3(bucket, file_key):
     response = s3_client.get_object(Bucket=bucket, Key=file_key)
     df_str = response["Body"].read()
     return pd.read_csv(BytesIO(df_str))
+
+
+def build_response(results):
+    response_body = json.dumps(results)
+
+    return {
+        "isBase64Encoded": False,
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": {"predictions": response_body},
+    }
 
 
 def handler(event, context):
@@ -50,8 +62,8 @@ def handler(event, context):
             teams_df.iloc[i]["away_team_abbreviation"]: prediction[1],
         }
         results.append(result)
-    print(results)
-    return results
+
+    return build_response(results)
 
 
 if __name__ == "__main__":
