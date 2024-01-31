@@ -24,13 +24,14 @@ def load_dataframe_from_s3(bucket, file_key):
 
 
 def build_response(results):
-    response_body = json.dumps(results)
+    # Convert results to JSON string
+    response_body = json.dumps({"predictions": results})
 
     return {
         "isBase64Encoded": False,
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
-        "body": {"predictions": response_body},
+        "body": response_body,
     }
 
 
