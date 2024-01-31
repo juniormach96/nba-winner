@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
 
-from cdk.codebuild_stack import CodeBuildStack
-from cdk.etl_stack import ETLStack
-from cdk.source_stack import SourceStack
-from cdk.train_ml_stack import TrainMLStack
+from stacks.codebuild_stack import CodeBuildStack
+from stacks.etl_stack import ETLStack
+from stacks.source_stack import SourceStack
+from stacks.train_ml_stack import TrainMLStack
 
 app = cdk.App()
 
