@@ -40,8 +40,9 @@ class ETLStack(Stack):
         # Grant ECR pull permissions
         lambda_role.add_to_policy(
             iam.PolicyStatement(
-                actions=["ecr:*"],
-                resources=[ecr_repository.repository_arn],
+                actions=["ecr:*"],  # TODO reduce the privileges
+                # resources=[ecr_repository.repository_arn],
+                resources=["*"],
             )
         )
 

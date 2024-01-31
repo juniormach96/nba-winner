@@ -59,7 +59,7 @@ class CodeBuildStack(Stack):
                 value=ecr_repositories["train_ml"].repository_name
             ),
             "TRAIN_ML_LAMBDA_FUNCTION_NAME": codebuild.BuildEnvironmentVariable(
-                value=lambda_functions["etl"].function_name
+                value=lambda_functions["train_ml"].function_name
             ),
         }
         build_project = codebuild.Project(
