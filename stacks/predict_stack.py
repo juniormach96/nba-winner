@@ -55,7 +55,7 @@ class PredictStack(Stack):
             role=lambda_role,
             environment={
                 "S3_BUCKET": s3_bucket.bucket_name,
-                "TRAIN_FILE_NAME": "to_predict.csv",
+                "PREDICT_FILE_NAME": "to_predict.csv",
                 "ML_MODEL_FILE": "best_model.pkl",
             },
             memory_size=512,
