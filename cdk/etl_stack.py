@@ -68,10 +68,9 @@ class ETLStack(Stack):
         schedule = events.Schedule.cron(
             minute="0",
             hour="11",
-            day_of_month="*",
+            day="*",
             month="*",
             year="*",
-            week_day="?",
         )
 
         # Create the event rule to trigger the lambda
