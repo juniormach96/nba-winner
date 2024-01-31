@@ -61,6 +61,14 @@ class CodeBuildStack(Stack):
             "TRAIN_ML_LAMBDA_FUNCTION_NAME": codebuild.BuildEnvironmentVariable(
                 value=lambda_functions["train_ml"].function_name
             ),
+            # PREDICT
+            "PREDICT_IMAGE_TAG": codebuild.BuildEnvironmentVariable(value="latest"),
+            "PREDICT_IMAGE_REPO_NAME": codebuild.BuildEnvironmentVariable(
+                value=ecr_repositories["predict"].repository_name
+            ),
+            "PREDICT_LAMBDA_FUNCTION_NAME": codebuild.BuildEnvironmentVariable(
+                value=lambda_functions["predict"].function_name
+            ),
         }
         build_project = codebuild.Project(
             self,
