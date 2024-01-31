@@ -60,8 +60,9 @@ class TrainMLStack(Stack):
         # Grant ECR pull permissions
         lambda_role.add_to_policy(
             iam.PolicyStatement(
-                actions=["ecr:*"],
-                resources=[train_ml_ecr_repository.repository_arn],
+                actions=["ecr:*"],  # TODO reduce privileges
+                # resources=[train_ml_ecr_repository.repository_arn],
+                resources=["*"],
             )
         )
 
