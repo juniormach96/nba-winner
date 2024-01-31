@@ -1,16 +1,16 @@
 import os
+import pickle
 from io import StringIO
 
 import boto3
+import numpy as np
 import pandas as pd
-from joblib import dump
-from lightgbm import LGBMRegressor
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 from skopt import gp_minimize
-from skopt.space import Integer, Real
+from skopt.space import Integer
 
-from .config import config
+from config import config
 
 s3_client = boto3.client("s3")
 
@@ -24,60 +24,88 @@ def read_data_from_s3(bucket, file_name):
     return df
 
 
-def train_model(X_train, y_train, params):
-    model = LGBMRegressor(**params)
+def train_model(X_train, y_train, params={}):
+    model = RandomForestRegressor(**params)
     model.fit(X_train, y_train)
     return model
 
 
-def optimize_model(X_train, y_train):
-    def objective(params):
-        model = LGBMRegressor(**params)
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        return mean_squared_error(y_test, y_pred)
+def time_series_split(
+    df, cutoff_ratio=0.75, target_columns=config.TARGET, feature_columns=config.FEATURES
+):
+    cutoff = int(len(df) * cutoff_ratio)
 
-    # Define the space of hyperparameters to search
+    train_df = df.iloc[:cutoff]
+    test_df = df.iloc[cutoff:]
+
+    X_train = train_df[feature_columns]
+    y_train = train_df[target_columns]
+    X_test = test_df[feature_columns]
+    y_test = test_df[target_columns]
+
+    return X_train, X_test, y_train, y_test
+
+
+def optimize_model(X, y, n_calls=config.N_CALLS_OPTIMIZATION):
+    def objective(params):
+        model = RandomForestRegressor(
+            n_estimators=params[0],
+            max_depth=params[1],
+            min_samples_split=params[2],
+            min_samples_leaf=params[3],
+            random_state=0,
+        )
+        time_series_cv = TimeSeriesSplit(n_splits=5)
+        return -np.mean(
+            cross_val_score(
+                model, X, y, cv=time_series_cv, scoring="neg_mean_squared_error"
+            )
+        )
+
     search_space = [
         Integer(100, 1000, name="n_estimators"),
-        Real(0.01, 0.5, name="learning_rate"),
-        Integer(1, 30, name="max_depth"),
-        Real(0.1, 1.0, name="subsample"),
-        Real(0.1, 1.0, name="colsample_bytree"),
+        Integer(5, 50, name="max_depth"),
+        Integer(2, 10, name="min_samples_split"),
+        Integer(1, 10, name="min_samples_leaf"),
     ]
 
-    result = gp_minimize(objective, search_space, n_calls=20, random_state=0)
+    result = gp_minimize(objective, search_space, n_calls=n_calls, random_state=0)
 
-    # Extract the best parameters
     best_params = {
-        dimension.name: result.x[i] for i, dimension in enumerate(search_space)
+        "n_estimators": result.x[0],
+        "max_depth": result.x[1],
+        "min_samples_split": result.x[2],
+        "min_samples_leaf": result.x[3],
     }
+
     return best_params
 
 
 def upload_model_to_s3(model, bucket, model_file):
-    dump(model, config.ML_MODEL_FILE)
-    s3_client.upload_file(config.ML_MODEL_FILE, bucket, model_file)
+    # Serialize the model using pickle
+    with open("model.pkl", "wb") as file:
+        pickle.dump(model, file)
+
+    # Upload the pickle file to S3
+    s3_client.upload_file("model.pkl", bucket, model_file)
+
+    # Remove model
+    os.remove("model.pkl")
 
 
 def handler(event, context):
     # Read data from S3
-    df = read_data_from_s3(config.BUCKET_NAME, config.TRAIN_FILE_NAME)
-    # Preprocess data (add your preprocessing logic here)
-    X = df.drop("target_column", axis=1)
-    y = df["target_column"]
+    df = read_data_from_s3(config.S3_BUCKET, config.TRAIN_FILE_NAME)
     # Split data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    X_train, X_test, y_train, y_test = time_series_split(df)
     # Optimize model
-    # optimized_params = optimize_model(X_train, y_train)
+    optimized_params = optimize_model(X_train, y_train)
     # Train model with optimized parameters
-    model = train_model(X_train, y_train)
+    X = df[config.FEATURES]
+    y = df[config.TARGET]
+    model = train_model(X, y, params=optimized_params)
     # Upload model to S3
-    upload_model_to_s3(model, config.BUCKET_NAME, config.ML_MODEL_FILE)
-    # Clean up local model file
-    os.remove(config.ML_MODEL_FILE)
+    upload_model_to_s3(model, config.S3_BUCKET, config.ML_MODEL_FILE)
 
 
 if __name__ == "__main__":
