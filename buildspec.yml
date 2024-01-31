@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+
+  build:
+    commands:
+      - echo "Listing files in the build context..."
+      - ls -al
+      - echo "Building ETL Image"
+      - docker build -t $ETL_IMAGE_REPO_NAME:$ETL_IMAGE_TAG -f ./etl.dockerfile .
+      - docker tag $ETL_IMAGE_REPO_NAME:$ETL_IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ETL_IMAGE_REPO_NAME:$ETL_IMAGE_TAG
+      - echo "Building Train ML Image"
+      - docker build -t $TRAIN_ML_IMAGE_REPO_NAME:$TRAIN_ML_IMAGE_TAG -f ./train_ml.dockerfile .
+      - docker tag $TRAIN_ML_IMAGE_REPO_NAME:$TRAIN_ML_IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$TRAIN_ML_IMAGE_REPO_NAME:$TRAIN_ML_IMAGE_TAG
+  post_build:
+    commands:
+      - echo "Pushing ETL Image"
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ETL_IMAGE_REPO_NAME:$ETL_IMAGE_TAG
+      - echo "Pushing TRAIN_ML Image"
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$TRAIN_ML_IMAGE_REPO_NAME:$TRAIN_ML_IMAGE_TAG
+      - aws lambda update-function-code --function-name $ETL_LAMBDA_FUNCTION_NAME --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ETL_IMAGE_REPO_NAME:$ETL_IMAGE_TAG
+      - echo "Update TRAIN_ML Lambda function code"
+      - aws lambda update-function-code --function-name $TRAIN_ML_LAMBDA_FUNCTION_NAME --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$TRAIN_ML_IMAGE_REPO_NAME:$TRAIN_ML_IMAGE_TAG
