@@ -11,10 +11,11 @@ app = cdk.App()
 source_stack = SourceStack(app, "SourceStack")
 
 s3_bucket = source_stack.s3_bucket
+codecommit_repository = source_stack.codecommit_repository
 
 ecr_repositories = {
     "etl": source_stack.etl_ecr_repository,
-    "train_ml": s3_bucket.train_ml_ecr_repository,
+    "train_ml": source_stack.train_ml_ecr_repository,
 }
 
 etl_stack = ETLStack(
@@ -27,7 +28,7 @@ etl_stack = ETLStack(
 train_ml_stack = TrainMLStack(
     app,
     "TrainMLStack",
-    s3_bucket=etl_stack.bucket,
+    s3_bucket=s3_bucket,
     train_ml_ecr_repository=ecr_repositories["train_ml"],
 )
 
@@ -39,6 +40,7 @@ lambda_functions = {
 codebuild_stack = CodeBuildStack(
     app,
     "CodeBuildStack",
+    codecommit_repository=codecommit_repository,
     ecr_repositories=ecr_repositories,
     lambda_functions=lambda_functions,
 )
