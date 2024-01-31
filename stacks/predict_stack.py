@@ -1,8 +1,10 @@
+import aws_cdk as cdk
 from aws_cdk import App, Aws, CfnOutput, Duration, Stack
 from aws_cdk import aws_apigateway as apigateway
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
 
 
@@ -13,7 +15,7 @@ class PredictStack(Stack):
         id: str,
         s3_bucket: s3.Bucket,
         predict_ecr_repository: ecr.Repository,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(app, id, **kwargs)
 
@@ -21,6 +23,8 @@ class PredictStack(Stack):
             s3_bucket=s3_bucket, predict_ecr_repository=predict_ecr_repository
         )
         self.api = self.create_api_gateway(self.predict_lambda_function)
+        self.add_lambda_logging(self.predict_lambda_function)
+
         # Outputs
         self.create_outputs(self.predict_lambda_function, self.api)
 
@@ -29,7 +33,7 @@ class PredictStack(Stack):
     ):
         lambda_role = iam.Role(
             self,
-            "MLLambdaExecutionRole",
+            "PredictLambdaExecutionRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
         )
         # Grant necessary permissions to the Lambda role
@@ -68,6 +72,16 @@ class PredictStack(Stack):
         )
 
         return lambda_function
+
+    def add_lambda_logging(self, lambda_function):
+        # Create a log group for the Lambda function
+        lambda_log_group = logs.LogGroup(
+            self,
+            "PredictLambdaLogGroup",
+            log_group_name=f"/aws/lambda/{lambda_function.function_name}",
+            removal_policy=cdk.RemovalPolicy.DESTROY,  # Adjust the removal policy as needed
+            retention=logs.RetentionDays.ONE_WEEK,  # Set the desired log retention period
+        )
 
     def create_api_gateway(self, predict_lambda_function):
         # Create a new API Gateway
