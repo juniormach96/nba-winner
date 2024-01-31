@@ -95,16 +95,8 @@ class CodeBuildStack(Stack):
         # Add ECR permissions to the CodeBuild project role
         build_project.add_to_role_policy(
             iam.PolicyStatement(
-                actions=[
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchGetImage",
-                    "ecr:BatchCheckLayerAvailability",
-                    "ecr:GetAuthorizationToken",
-                ],
-                resources=[
-                    ecr_repository.repository_arn
-                    for ecr_repository in ecr_repositories.values()
-                ],
+                actions=["ecr:*"],  # TODO reduce privileges
+                resources=["*"],
             )
         )
         return build_project
