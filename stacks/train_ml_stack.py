@@ -57,7 +57,7 @@ class TrainMLStack(Stack):
                 "TRAIN_FILE_NAME": "to_predict.csv",
                 "ML_MODEL_FILE": "best_model.pkl",
             },
-            memory_size=3008,
+            memory_size=512,
             timeout=Duration.minutes(10),
         )
 
