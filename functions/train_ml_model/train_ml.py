@@ -81,16 +81,30 @@ def optimize_model(X, y, n_calls=config.N_CALLS_OPTIMIZATION):
     return best_params
 
 
-def upload_model_to_s3(model, bucket, model_file):
-    # Serialize the model using pickle
-    with open("model.pkl", "wb") as file:
-        pickle.dump(model, file)
+def get_base_path():
+    if os.getenv("LOCAL_TEST"):
+        # Running locally
+        return "."
+    else:
+        # Running in AWS Lambda
+        return "/tmp"
 
-    # Upload the pickle file to S3
-    s3_client.upload_file("model.pkl", bucket, model_file)
 
-    # Remove model
-    os.remove("model.pkl")
+def upload_model_to_s3(model, bucket, model_key):
+    # Serialize the model
+    model_data = pickle.dumps(model)
+
+    # Determine the base path
+    base_path = get_base_path()
+    temp_path = os.path.join(base_path, model_key)
+
+    # Write to a file
+    with open(temp_path, "wb") as file:
+        file.write(model_data)
+
+    # Upload the file to S3
+    with open(temp_path, "rb") as file:
+        s3_client.upload_fileobj(file, bucket, model_key)
 
 
 def handler(event, context):
