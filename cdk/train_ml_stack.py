@@ -1,5 +1,7 @@
 from aws_cdk import App, Aws, CfnOutput, Duration, Stack
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_events as events
+from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
 from aws_cdk import aws_s3 as s3
@@ -20,6 +22,8 @@ class TrainMLStack(Stack):
         self.train_ml_lambda_function = self.create_ml_lambda_function(
             s3_bucket=s3_bucket, train_ml_ecr_repository=train_ml_ecr_repository
         )
+        # Schedule the function
+        self.schedule_lambda_function(self.train_ml_lambda_function)
         # Outputs
         self.create_outputs(self.train_ml_lambda_function)
 
@@ -67,6 +71,23 @@ class TrainMLStack(Stack):
         )
 
         return lambda_function
+
+    def schedule_lambda_function(self, lambda_function: _lambda.Function):
+        schedule = events.Schedule.cron(
+            minute="0",
+            hour="11",
+            day="10",
+            month="*",
+            year="*",
+        )
+
+        # Create the event rule to trigger the lambda
+        rule = events.Rule(
+            self,
+            "ETLRule",
+            schedule=schedule,
+            targets=[targets.LambdaFunction(lambda_function)],
+        )
 
     def create_outputs(self, ml_lambda_function):
         CfnOutput(
