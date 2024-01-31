@@ -16,9 +16,13 @@ class SourceStack(Stack):
         self.train_ml_ecr_repository = self.create_ecr_repository(
             repository_name="train_ml_ecr_repository"
         )
+        self.predict_ecr_repository = self.create_ecr_repository(
+            repository_name="predict_ecr_repository"
+        )
         self.ecr_repositories = {
             "etl": self.etl_ecr_repository,
             "train_ml": self.train_ml_ecr_repository,
+            "predict": self.predict_ecr_repository,
         }
 
     def create_bucket(self):

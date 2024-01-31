@@ -17,15 +17,14 @@ class PredictStack(Stack):
     ) -> None:
         super().__init__(app, id, **kwargs)
 
-        # Create the Lambda function for the Prediction
-        self.predict_lambda_function = self.create_ml_lambda_function(
+        self.predict_lambda_function = self.create_predict_lambda_function(
             s3_bucket=s3_bucket, predict_ecr_repository=predict_ecr_repository
         )
-        self.create_api_gateway(self.predict_lambda_function)
+        self.api = self.create_api_gateway(self.predict_lambda_function)
         # Outputs
-        self.create_outputs(self.predict_lambda_function)
+        self.create_outputs(self.predict_lambda_function, self.api)
 
-    def create_ml_lambda_function(
+    def create_predict_lambda_function(
         self, s3_bucket: s3.Bucket, predict_ecr_repository: ecr.Repository
     ):
         lambda_role = iam.Role(
@@ -86,19 +85,19 @@ class PredictStack(Stack):
             "GET",
             apigateway.LambdaIntegration(predict_lambda_function),
         )
+        return api
 
-        # Output the URL of the API Gateway endpoint
-        CfnOutput(
-            self,
-            "apiEndpoint",
-            value=api.url,
-            description="URL of the API Gateway endpoint",
-        )
-
-    def create_outputs(self, predict_lambda_function):
+    def create_outputs(self, predict_lambda_function, api):
         CfnOutput(
             self,
             "predictLambdaFunctionArn",
             value=predict_lambda_function.function_arn,
             description="ARN of the ML Predict Lambda Function",
+        )
+
+        CfnOutput(
+            self,
+            "apiEndpoint",
+            value=api.url,
+            description="URL of the API Gateway endpoint",
         )
