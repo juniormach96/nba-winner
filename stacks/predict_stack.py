@@ -1,4 +1,5 @@
 from aws_cdk import App, Aws, CfnOutput, Duration, Stack
+from aws_cdk import aws_apigateway as apigateway
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
@@ -16,15 +17,16 @@ class PredictStack(Stack):
     ) -> None:
         super().__init__(app, id, **kwargs)
 
-        # Create the Lambda function for the ML training
-        self.train_ml_lambda_function = self.create_ml_lambda_function(
-            s3_bucket=s3_bucket, train_ml_ecr_repository=train_ml_ecr_repository
+        # Create the Lambda function for the Prediction
+        self.predict_lambda_function = self.create_ml_lambda_function(
+            s3_bucket=s3_bucket, predict_ecr_repository=predict_ecr_repository
         )
+        self.create_api_gateway(self.predict_lambda_function)
         # Outputs
-        self.create_outputs(self.train_ml_lambda_function)
+        self.create_outputs(self.predict_lambda_function)
 
     def create_ml_lambda_function(
-        self, s3_bucket: s3.Bucket, train_ml_ecr_repository: ecr.Repository
+        self, s3_bucket: s3.Bucket, predict_ecr_repository: ecr.Repository
     ):
         lambda_role = iam.Role(
             self,
@@ -42,10 +44,10 @@ class PredictStack(Stack):
 
         lambda_function = _lambda.DockerImageFunction(
             self,
-            "TrainML_lambda_function",
+            "Predict_lambda_function",
             code=_lambda.DockerImageCode.from_image_asset(
                 directory=".",
-                file="train_ml.dockerfile",
+                file="predict.dockerfile",
             ),
             role=lambda_role,
             environment={
@@ -61,16 +63,42 @@ class PredictStack(Stack):
         lambda_role.add_to_policy(
             iam.PolicyStatement(
                 actions=["ecr:*"],
-                resources=[train_ml_ecr_repository.repository_arn],
+                # resources=[predict_ecr_repository.repository_arn],
+                resources=["*"],  # TODO reduce privileges
             )
         )
 
         return lambda_function
 
-    def create_outputs(self, ml_lambda_function):
+    def create_api_gateway(self, predict_lambda_function):
+        # Create a new API Gateway
+        api = apigateway.LambdaRestApi(
+            self,
+            "PredictAPI",
+            handler=predict_lambda_function,
+            proxy=False,  # Set to False to define individual routes
+        )
+
+        # Define a nested resource 'predict/next-games' for GET requests
+        predict_resource = api.root.add_resource("predict")
+        next_games_resource = predict_resource.add_resource("next-games")
+        next_games_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(predict_lambda_function),
+        )
+
+        # Output the URL of the API Gateway endpoint
         CfnOutput(
             self,
-            "mlLambdaFunctionArn",
-            value=ml_lambda_function.function_arn,
-            description="ARN of the ML Training Lambda Function",
+            "apiEndpoint",
+            value=api.url,
+            description="URL of the API Gateway endpoint",
+        )
+
+    def create_outputs(self, predict_lambda_function):
+        CfnOutput(
+            self,
+            "predictLambdaFunctionArn",
+            value=predict_lambda_function.function_arn,
+            description="ARN of the ML Predict Lambda Function",
         )
