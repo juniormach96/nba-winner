@@ -15,6 +15,7 @@ class CodeBuildStack(Stack):
         self,
         scope: App,
         id: str,
+        codecommit_repository: codecommit.Repository,
         ecr_repositories: Dict[str, ecr.Repository],
         lambda_functions: Dict[str, _lambda.Function],
         **kwargs
@@ -22,7 +23,7 @@ class CodeBuildStack(Stack):
         super().__init__(scope, id, **kwargs)
 
         self.codebuild_project = self.create_codebuild_project(
-            self.codecommit_repository,
+            codecommit_repository,
             ecr_repositories=ecr_repositories,
             lambda_functions=lambda_functions,
         )
@@ -47,12 +48,19 @@ class CodeBuildStack(Stack):
             # ETL
             "ETL_IMAGE_TAG": codebuild.BuildEnvironmentVariable(value="latest"),
             "ETL_IMAGE_REPO_NAME": codebuild.BuildEnvironmentVariable(
-                value=ecr_repository.repository_name
+                value=ecr_repositories["etl"].repository_name
             ),
             "ETL_LAMBDA_FUNCTION_NAME": codebuild.BuildEnvironmentVariable(
                 value=lambda_functions["etl"].function_name
             ),
             # TRAIN ML
+            "TRAIN_ML_IMAGE_TAG": codebuild.BuildEnvironmentVariable(value="latest"),
+            "TRAIN_ML_IMAGE_REPO_NAME": codebuild.BuildEnvironmentVariable(
+                value=ecr_repositories["train_ml"].repository_name
+            ),
+            "TRAIN_ML_LAMBDA_FUNCTION_NAME": codebuild.BuildEnvironmentVariable(
+                value=lambda_functions["etl"].function_name
+            ),
         }
         build_project = codebuild.Project(
             self,
