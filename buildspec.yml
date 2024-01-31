@@ -31,4 +31,4 @@ phases:
       - echo "Update TRAIN_ML Lambda function code"
       - aws lambda update-function-code --function-name $TRAIN_ML_LAMBDA_FUNCTION_NAME --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$TRAIN_ML_IMAGE_REPO_NAME:$TRAIN_ML_IMAGE_TAG
       - echo "Update PREDICT Lambda function code"
-      - aws lambda update-function-code --function-name $PREDICT_LAMBDA_FUNCTION_NAME --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$PREDICT_IMAGE_REPO_NAME:$PR  EDICT_IMAGE_TAG
+      - aws lambda update-function-code --function-name $PREDICT_LAMBDA_FUNCTION_NAME --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$PREDICT_IMAGE_REPO_NAME:$PREDICT_IMAGE_TAG
