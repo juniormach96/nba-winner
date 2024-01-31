@@ -17,11 +17,11 @@ class TrainMLStack(Stack):
         super().__init__(app, id, **kwargs)
 
         # Create the Lambda function for the ML training
-        train_ml_lambda_function = self.create_ml_lambda_function(
+        self.train_ml_lambda_function = self.create_ml_lambda_function(
             s3_bucket=s3_bucket, train_ml_ecr_repository=train_ml_ecr_repository
         )
         # Outputs
-        self.create_outputs(train_ml_lambda_function)
+        self.create_outputs(self.train_ml_lambda_function)
 
     def create_ml_lambda_function(
         self, s3_bucket: s3.Bucket, train_ml_ecr_repository: ecr.Repository
@@ -48,9 +48,13 @@ class TrainMLStack(Stack):
                 file="train_ml.dockerfile",
             ),
             role=lambda_role,
-            environment={"S3_BUCKET": s3_bucket.bucket_name},
-            memory_size=1024,
-            timeout=Duration.minutes(5),
+            environment={
+                "S3_BUCKET": s3_bucket.bucket_name,
+                "TRAIN_FILE_NAME": "to_predict.csv",
+                "ML_MODEL_FILE": "best_model.pkl",
+            },
+            memory_size=3008,
+            timeout=Duration.minutes(10),
         )
 
         # Grant ECR pull permissions
