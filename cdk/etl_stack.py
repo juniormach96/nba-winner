@@ -2,6 +2,8 @@ from aws_cdk import App, Aws, CfnOutput, Duration, Stack
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_events as events
+from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
 from aws_cdk import aws_s3 as s3
@@ -20,6 +22,7 @@ class ETLStack(Stack):
         self.etl_lambda_function = self.create_etl_lambda_function(
             s3_bucket=s3_bucket, ecr_repository=etl_ecr_repository
         )
+        self.schedule_lambda_function(self.etl_lambda_function)
         self.create_outputs(self.etl_lambda_function)
 
     def create_etl_lambda_function(
@@ -60,6 +63,24 @@ class ETLStack(Stack):
         )
 
         return lambda_function
+
+    def schedule_lambda_function(self, lambda_function: _lambda.Function):
+        schedule = events.Schedule.cron(
+            minute="0",
+            hour="11",
+            day_of_month="*",
+            month="*",
+            year="*",
+            week_day="?",
+        )
+
+        # Create the event rule to trigger the lambda
+        rule = events.Rule(
+            self,
+            "ETLRule",
+            schedule=schedule,
+            targets=[targets.LambdaFunction(lambda_function)],
+        )
 
     def create_outputs(self, etl_lambda_function: _lambda.Function):
         CfnOutput(
