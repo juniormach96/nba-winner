@@ -94,15 +94,17 @@ $ cdk synth
 3.  **Deploy the stacks to your AWS account**
     
     -   Deploy all the stacks:
-        
-        `cdk deploy --all`
-    
-3.  **Clean the Resources once you finished**
-        
-        `cdk destroy`
+```
 
-        
+cdk deploy --all
 
+``` 
+4.  **Clean the Resources once you finished**
+```
+
+cdk destroy
+
+``` 
 ## Usage
 
 -   **ETL Process**: Automatically runs daily. No manual intervention required unless debugging or modifications are needed.
