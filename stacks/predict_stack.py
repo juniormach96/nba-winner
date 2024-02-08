@@ -56,6 +56,7 @@ class PredictStack(Stack):
             environment={
                 "S3_BUCKET": s3_bucket.bucket_name,
                 "PREDICT_FILE_NAME": "to_predict.csv",
+                "TRAIN_FILE_NAME": "to_train.csv",
                 "ML_MODEL_FILE": "best_model.pkl",
             },
             memory_size=512,
