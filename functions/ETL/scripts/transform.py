@@ -29,7 +29,7 @@ def pre_select_features(df: DataFrame) -> DataFrame:
 
 def correct_dtypes(df: DataFrame) -> DataFrame:
     """Converts 'date' column to datetime format."""
-    df["date"] = pd.to_datetime(df["date"])
+    df["date"] = pd.to_datetime(df["date"]).dt.tz_localize('UTC')
     return df
 
 
@@ -119,15 +119,15 @@ def remove_unnecessary_columns(df: DataFrame) -> DataFrame:
 
 def separate_games_to_train_and_predict(df: DataFrame) -> Tuple[DataFrame, DataFrame]:
     """Separates the games into those to train on and those to predict."""
-    today_utc = datetime.now(timezone.utc).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
+    today_utc = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
     n_teams = len(df["home_team_abbreviation"].unique())
+
     to_predict = df[
         (df["home_date"] >= today_utc)
         & (df["home_team_score"] == 0)
         & (df["away_team_score"] == 0)
-    ].head(n_teams)
+    ].head(n_teams//2)
     to_train = df[(df["home_team_score"] != 0) & (df["away_team_score"] != 0)].dropna()
     return to_train, to_predict
 
